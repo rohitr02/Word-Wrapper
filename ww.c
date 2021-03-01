@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <ctype.h>
 #include "ww.h"
 
 #ifndef DEBUG
@@ -10,6 +11,11 @@
 
 int main(int argc, char* argv[]){
     /*          Checking Input Validity         */
+
+    // Possible Errors That Could Exist
+    // Something might be wrong with wordIndex -- it might be off by 1 or 2
+
+
     // No arguments entered or too many arguments entered
     if(argc < 2 || argc > 2) return EXIT_FAILURE;
     // If the first argument entered is invalid or not positive
@@ -17,34 +23,75 @@ int main(int argc, char* argv[]){
 
     unsigned int wrapLen = atoi(argv[1]);
 
-    /*          1 Input Reading             */
-    // Variables needed for reading input
-    char buffer[wrapLen];
-    unsigned int wordCount = 0, charLen = 0;
-    unsigned long int bigWordSize = wrapLen, bigWordIndex = 0; // the biggest word can theoretically be unsigned int large and we need an additional space for '\0'
-    char* regWord = calloc(wrapLen+1, sizeof(char)), bigWord = calloc(bigWordSize+1, sizeof(char)); // init to all null terminators
-    int bytes = 0; // used for the while loop to detect end of file
 
-    while ((bytes = read(0, buffer, 1)) > 0) {
-        charLen++;
-        if(charLen >= wrapLen){
-            if(isEmpty(regWord)){
-                if(DEBUG) printf("Copying regword into bigword here\n");
-                strcpy(bigWord, regWord);
-            }
-            if(charLen >= 2 * wrapLen){
-                if(DEBUG) printf("Current word is bigger than 2 * the maximum\n");
-                wordCount = 0;
-            }
-            if(isspace(bytes)!=0){
-                if(DEBUG) printf("Current char is not a space\n");
-                addElementToString(bigWord, bytes, &bigWordSize, &bigWordIndex);
-                continue;
-            }
+    /*          1 Input Entered             */
+
+    char buffer[1];                                         // buffer to save each char
+    unsigned int wordCount = 0, charLen = 0, wordIndex = 0; // variables to keep track of specific counters
+    char* word = calloc(wrapLen+1, sizeof(char));           // init to all null terminators
+    int isBigWord = 0;                                      // used to detect if the current word is a big word (0-false, 1-true)
+    int byte = 0;                                           // used for the while loop to detect end of file
+
+    while ((byte = read(0, buffer, 1)) > 0) {
+        if(buffer[0] == 10){                                // carriage return
+            printWord(word, wordIndex);
+            printChar('\n');
+            free(word);
+            return EXIT_SUCCESS;
         }
-        write(0, buffer, bytes);
+        if(charLen < wrapLen){
+            if(!isspace(buffer[0])){
+                word[wordIndex] = buffer[0];
+                wordIndex = wordIndex + 1;
+                charLen = charLen + 1;
+            }else{
+                // CARRIAGE RETURN CASE WAS HERE
+                printWord(word, wordIndex);
+                if(isBigWord == 0){
+                    printChar(' ');
+                    wordCount = wordCount + 1;
+                    charLen = charLen +1;
+                }else{
+                    printChar('\n');
+                    isBigWord = 0;
+                    charLen = 0;
+                }
+                clearWord(word, wordIndex);
+                wordIndex = 0;
+            }
+        }else if(charLen == wrapLen){
+            if(isspace(buffer[0])){
+                // CARRIAGE RETURN CASE WAS HERE
+                if(wordCount >= 0){
+                    printWord(word, wordIndex);
+                    printChar('\n');
+                    isBigWord = 0;
+                    charLen = 0;
+                    wordCount = 0;
+                    clearWord(word, wordIndex);
+                    wordIndex = 0;
+                }else return throwError(word);
+            }else{
+                if(wordCount > 0){
+                    if(isBigWord == 0){
+                        printChar('\n');
+                    }
+                    charLen = wordIndex+1;
+                }else if (wordCount == 0){
+                    charLen = 0;
+                    isBigWord = 1;
+                }else return throwError(word);
+                word[wordIndex] = buffer[0];
+                printWord(word, wordIndex);
+                wordCount = 0;
+                clearWord(word, wordIndex);
+                wordIndex = 0;
+            }
+        } else return throwError(word);
     }
-    if (bytes < 0) {
+    if (byte < 0) {
         perror("Read error");
     }
+    free(word);
+    return EXIT_SUCCESS;
 }
