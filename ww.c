@@ -11,9 +11,14 @@
 
 int main(int argc, char* argv[]){
 
-    // Possible Errors That Could Exist
+    /* Possible Errors That Could Exist */
     // Something might be wrong with wordIndex -- it might be off by 1 or 2
     // There may be extra spaces or newline chars at the end of lines -- I can't tell if they exist in vscode console
+    // Strange behavior when single letters are repeatedly entered into stdin. -- It reads input from the same line.
+
+    /* Changes to Make */
+    // Make the counter variables signed and call assertions within the while loop
+    // User should not be able to enter a number followed by letters
 
 
     /*          Checking Input Validity         */
@@ -24,19 +29,16 @@ int main(int argc, char* argv[]){
 
 
     /*          1 Input Entered             */
-
     char buffer[1];                                         // buffer to save each char
     unsigned int wordCount = 0, lineLen = 0, wordIndex = 0; // variables to keep track of specific counters
     char* word = calloc(wrapLen+1, sizeof(char));           // init to all null terminators
     int isBigWord = 0;                                      // used to detect if the current word is a big word (0-false, 1-true)
-    int byte = 0;                                           // used for the while loop to detect end of file
+    int byte = 0, eof = 0;                                  // used for the while loop and used to detect end of file
 
-    while ((byte = read(0, buffer, 1)) > 0) {
-        if(buffer[0] == 10){                                // carriage return case
-            printWord(word, wordIndex);                     // Write the word to the current line
-            printChar('\n');                                // Write a newline
-            free(word);                                     // Free the string word to avoid memory leaks
-            return EXIT_SUCCESS;                            // Exit Successfully
+    while (eof == 0 && (byte = read(0, buffer, 1)) >= 0) {
+        if(byte == 0){                                      // If this is the terminating byte (ctrl D)
+            eof = 1;                                            // Set the end of file flag to true
+            buffer[0] = ' ';                                    // Treat the char like a space (for output purposes)
         }
         if(lineLen < wrapLen){                              // If the length of the line is less than the maximum allowed wrap length
             if(!isspace(buffer[0])){                            // If the current char is not a space
@@ -46,7 +48,10 @@ int main(int argc, char* argv[]){
             }else{                                              // If the current char is a space
                 printWord(word, wordIndex);                         // Write the word to the current line
                 if(isBigWord == 0){                                 // If the word is not bigger than the allowed wrap length
-                    printChar(' ');                                     // Write a space
+                    if (eof == 0)                                       // If its not the end of the input
+                        printChar(' ');                                     // Write a space
+                    else                                                // If it is the end of the input
+                        printChar('\n');                                    // Write a newline character (go to the next line)
                     wordCount = wordCount + 1;                          // Update/Increment the number of words on the line
                     lineLen = lineLen + 1;                              // Update/Increment the length of the line
                 }else{                                              // If the word is bigger than the allowed wrap length
