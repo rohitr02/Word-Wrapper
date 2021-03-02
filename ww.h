@@ -34,3 +34,16 @@ void debugPrintWord(char* string, unsigned int wordIndex){
     printf("\n");
 }
 
+struct line {
+    unsigned int width;                  // width ->  equal to the width the lines should be, the line's capacity
+    unsigned int length;                 // length -> keeps track of how many are characters currently in the line, the line's current length
+    unsigned int letters;               // keeps track of all non-white space characters
+    char *characters;          // *characters -> the array that will hold each letter
+};
+
+struct word {
+    unsigned int size;
+    unsigned int currentLength;
+    char *string;
+};
+
