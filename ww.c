@@ -29,7 +29,7 @@ int main(int argc, char* argv[]){
     if(argc < 2 || argc > 3) return EXIT_FAILURE;           // No arguments entered or too many arguments entered
     if(atoi(argv[1]) <= 0) return EXIT_FAILURE;             // If the first argument entered is invalid or not positive
 
-    unsigned int wrapLen = atoi(argv[1]);                   // Indicates the width of the wrapped file
+    int wrapLen = atoi(argv[1]);                   // Indicates the width the text should be wrapped to
 
     char currentChar;                                         // changed buffer to a single char, easier to read  
     struct line* currentLine = malloc(sizeof(struct line));     // this struct keeps track of the status of the line
@@ -50,16 +50,15 @@ int main(int argc, char* argv[]){
     if(argc == 2) fd = 0;                                       // if there is no file present (argc == 2), read from STDIN
     else {                                                      // else, there is a file present, so read from file
         fd = open(argv[2], O_RDONLY, 0);
-        if(fd < 0) {                                            // if fd < 0, it means file does not exist, so exit
+        if(fd == -1) {                                            // if fd == -1, it means file does not exist, so exit
             free(currentLine->characters);
             free(currentLine);
-            perror("The file you entered cannot be found");
+            perror(argv[2]);
             return EXIT_FAILURE;
         }
     }
 
-    while((byte = read(fd, &currentChar, 1)) != 0) {
-
+    while((byte = read(fd, &currentChar, 1)) > 0) {
         if(currentChar == '\n' && (fd != 0)) {                       //if the current char is a newline, write whatever is in the line struct and write a newline
             if(currentLine->length > 0) {                           // this case is for when reading from a file, hence the (fd != 0) 
                 write(0,currentLine->characters, currentLine->length);
@@ -104,8 +103,15 @@ int main(int argc, char* argv[]){
                     isBigWord = TRUE;                       // since the word struct initially = wrapLen, increasing the size means that the word encountered is bigger than the weidth
                 }
                 newWord->string[newWord->currentLength++] = currentChar;  // current character read gets added to the word struct
-                if((byte = read(fd, &currentChar, 1)) == 0) break;      // if EOF is reached, break out of the loop, there is no more characters to read.
-                                                                            // Notice that this if statement reads one more character, which needs to get accounted for
+                if((byte = read(fd, &currentChar, 1)) == 0) break;      // if EOF is reached, break out of the loop, there is no more characters to read. Notice that this if statement reads one more character, which needs to get accounted for
+                if(byte == -1) {                                         // if byte == -1, then something has gone wrong and we need to return   
+                    free(currentLine->characters);
+                    free(newWord->string);
+                    free(currentLine);
+                    free(newWord);
+                    close(fd); 
+                    return EXIT_FAILURE;
+                }                                                            
             }
             
             if(isBigWord == TRUE) {                         // case to handle words that are bigger than wrapLen
