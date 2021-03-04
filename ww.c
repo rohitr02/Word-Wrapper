@@ -126,7 +126,7 @@ int main(int argc, char* argv[]){
                 }
             }
             else if(newWord.currentLength + currentLine.length > currentLine.width) {  // Case for when adding the new word to the current line exceeds to wrapLen
-                write(0,currentLine.characters, currentLine.length);                      // write out what's already in the line and reset currentLine
+                write(0,currentLine.characters, currentLine.length-1);                      // write out what's already in the line and reset currentLine
                 currentLine.length = 0;
                 printChar('\n');
 
