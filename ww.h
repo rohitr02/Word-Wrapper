@@ -34,19 +34,47 @@ void debugPrintWord(char* string, int wordIndex){
     printf("\n");
 }
 
-struct line {
-    int width;                  // width ->  equal to the width the lines should be, the line's capacity
-    int length;                 // length -> keeps track of how many are characters currently in the line, the line's current length
-    int letters;               // keeps track of all non-white space characters
-    char *characters;          // *characters -> the array that will hold each letter
-};
 
+
+
+/* Decription:
+    Used to better organize the current line being worked on.
+
+    @var width -> keeps track of what the width of each line should be
+    @var length -> inidcates how many characters are present in the line
+    @var characters -> A char array to keep track of all the characters present in the line
+*/
+struct line {
+    int width;              
+    int length;                
+    char *characters;         
+};
+/* Decription:
+    Used to better store each tokenized word
+
+    @var size -> keeps track of what the eidth of each word should be.
+    @var currentLength -> inidcates the current size of the word
+    @var string -> A char array to keep track of all the characters in the word
+*/
 struct word {
     int size;
     int currentLength;
     char *string;
 };
-
+/*  Description:
+    Used to tokenize each word that's encountered
+    
+    @param int fd 
+        - File descriptor. This is used to know which file we're going to be reading
+    @param char* currentChar
+        - This is used to write back the characters encountered. More importantly, this is used to keep track of
+        of the last encountered character. If the last encountered character is a \n, then it may signal a new paragraph, so we have to handle it accordingly
+    @param int *byte
+        - Pointer to byte is used to write back outside of the function and to keep track of EOF (0) or errors (-1) 
+    @param int *isBigWord
+        - Pointer to isBigWord is used to keep track words we may encounter that are bigger than the width, which we have to handle differently
+    @param struct word* newWord
+        - This is used to write the words into a char array and then use it outside of the function accordingly */
 int getNextWord(int fd, char *currentChar, int *byte, int *isBigWord, struct word* newWord) {
     newWord->string = malloc(sizeof(char) * newWord->size);
     if(newWord->string == NULL) {
@@ -54,8 +82,8 @@ int getNextWord(int fd, char *currentChar, int *byte, int *isBigWord, struct wor
         return EXIT_FAILURE;
     }
 
-    while(!isspace(*currentChar)) {                      // after initialzing the word struct, we repeatedly read the next char as long as its not a white space
-        if(newWord->currentLength == newWord->size) {   // the word struct gets full, double the size
+    while(!isspace(*currentChar)) {  
+        if(newWord->currentLength == newWord->size) {   
             char *temp;
             temp = realloc(newWord->string, newWord->size*2);
             if(newWord->string == NULL) {
@@ -65,21 +93,20 @@ int getNextWord(int fd, char *currentChar, int *byte, int *isBigWord, struct wor
             }
             newWord->string = temp;
             newWord->size *= 2;
-            *isBigWord = 1;                       // since the word struct initially = wrapLen, increasing the size means that the word encountered is bigger than the weidth
+            *isBigWord = 1;                       
         }
         newWord->string[newWord->currentLength++] = *currentChar; 
 
         *byte = read(fd, currentChar, 1);
         if(*byte == 0) return EXIT_SUCCESS;
              
-        if(*byte == -1) {                                         // if byte == -1, then something has gone wrong and we need to return   
+        if(*byte == -1) {                                       
             free(newWord->string);
             close(fd); 
             return EXIT_FAILURE;
         }     
                                                                
-    }
-            
+    }     
     return EXIT_SUCCESS;
 }
 
