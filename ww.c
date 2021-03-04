@@ -45,6 +45,7 @@ int main(int argc, char* argv[]){
     int byte;                                           // used to read in bytes and to keep track of errors and  EOF
     int fd;                                             // used to keep track of whether we're reading from STDIN or a file/dir
     char currentChar;                                   // used to store every character that's read from read()
+    int inBetweenText = FALSE;         
                                                         
     if(argc == 2) fd = 0;                               // if argc = 2, then the only argument must be a number & we read from STDIN
     else {                                                       
@@ -61,10 +62,12 @@ int main(int argc, char* argv[]){
 
         if(currentChar == '\n') {                       // [PARAGRAPH CASE] if we encounter a newline, then we check to see if the next char is also a newline. If it is, it indicates a new paragraph and we dump whatever we have in the current line and set up the new paragraph
             byte = read(fd, &currentChar, 1); 
-            if((currentChar == '\n') && (currentLine.length > 0)) {
-                write(0,currentLine.characters, currentLine.length);
-                currentLine.length = 0;
-                printChar('\n');
+            if((currentChar == '\n') && (inBetweenText)) {
+                if(currentLine.length > 0){
+                    write(0,currentLine.characters, currentLine.length);
+                    currentLine.length = 0;
+                    printChar('\n');
+                }
                 printChar('\n');
             }
         }
@@ -72,7 +75,7 @@ int main(int argc, char* argv[]){
             struct word newWord;                                   // struct used to save the upcoming word
             newWord.size = wrapLen;
             newWord.currentLength = 0;                              // setting the length of the struct to zero to use as index for incoming chars
-
+            inBetweenText = TRUE;
             if((getNextWord(fd, &currentChar, &byte, &isBigWord, &newWord)) == 1){     // GO TO WW.H FOR DESCRIPTION
                 free(currentLine.characters);
                 return EXIT_FAILURE;
