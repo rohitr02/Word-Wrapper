@@ -47,3 +47,39 @@ struct word {
     char *string;
 };
 
+int getNextWord(int fd, char *currentChar, int *byte, int *isBigWord, struct word* newWord) {
+    newWord->string = malloc(sizeof(char) * newWord->size);
+    if(newWord->string == NULL) {
+        close(fd); 
+        return EXIT_FAILURE;
+    }
+
+    while(!isspace(*currentChar)) {                      // after initialzing the word struct, we repeatedly read the next char as long as its not a white space
+        if(newWord->currentLength == newWord->size) {   // the word struct gets full, double the size
+            char *temp;
+            temp = realloc(newWord->string, newWord->size*2);
+            if(newWord->string == NULL) {
+                free(newWord->string);
+                close(fd); 
+                return EXIT_FAILURE;
+            }
+            newWord->string = temp;
+            newWord->size *= 2;
+            *isBigWord = 1;                       // since the word struct initially = wrapLen, increasing the size means that the word encountered is bigger than the weidth
+        }
+        newWord->string[newWord->currentLength++] = *currentChar; 
+
+        *byte = read(fd, currentChar, 1);
+        if(*byte == 0) return EXIT_SUCCESS;
+             
+        if(*byte == -1) {                                         // if byte == -1, then something has gone wrong and we need to return   
+            free(newWord->string);
+            close(fd); 
+            return EXIT_FAILURE;
+        }     
+                                                               
+    }
+            
+    return EXIT_SUCCESS;
+}
+
