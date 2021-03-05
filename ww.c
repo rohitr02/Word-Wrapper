@@ -64,11 +64,11 @@ int main(int argc, char* argv[]){
             byte = read(fd, &currentChar, 1); 
             if((currentChar == '\n') && (inBetweenText)) {
                 if(currentLine.length > 0){
-                    write(1,currentLine.characters, currentLine.length);
+                    write(1,currentLine.characters, currentLine.length-1);
                     currentLine.length = 0;
                     printChar('\n');
+                    printChar('\n');
                 }
-                printChar('\n');
             }
         }
         else if(!isspace(currentChar)) {                           // if the read byte is not a white space, then we tokenize the upcoming word
@@ -85,15 +85,15 @@ int main(int argc, char* argv[]){
 
            if(isBigWord == TRUE) {                         // case to handle words that are bigger than the indicated width
                 if(currentLine.length > 0) {               // if there is something in the line struct, write it to STDOUT to give the bid word its own line
-                    write(1,currentLine.characters, currentLine.length);
+                    write(1,currentLine.characters, currentLine.length-1);
                     currentLine.length = 0;
                     printChar('\n');
                 }
                 write(1,newWord.string, newWord.currentLength);
                 printChar('\n');
                 if(currentChar == '\n') {               // if the last char read in getNextWord() was a \n, then we check to see if the next char is also a \n, if so, it indicates a new paragraph
-                  byte = read(fd, &currentChar, 1); 
-                  if(currentChar == '\n') printChar('\n');
+                    byte = read(fd, &currentChar, 1); 
+                    if(currentChar == '\n') printChar('\n');
                 }
                 free(newWord.string);
                 isBigWord = FALSE;
@@ -112,25 +112,27 @@ int main(int argc, char* argv[]){
                         byte = read(fd, &currentChar, 1); 
                         if(currentChar == '\n') printChar('\n');
                     }
-                    
                 }
                 else {                                                  // cases for when  current line is not full
                     if(currentChar == '\n') {                           // if the last char read in getNextWord() was a \n, then we check to see if the next char is also a \n, if so, it indicates a new paragraph
                         if(fd == 0) {
                             write(1,currentLine.characters, currentLine.length);           
                             currentLine.length = 0;
-                            printChar('\n');   
-                        }
-                        byte = read(fd, &currentChar, 1);    
-                        if(currentChar == '\n') {                                     
-                            write(1,currentLine.characters, currentLine.length);           
-                            currentLine.length = 0;
-                            printChar('\n');
-                            printChar('\n');
-                        }
+                            printChar('\n'); 
+                            byte = read(fd, &currentChar, 1);  
+                        } 
+                        else {
+                            byte = read(fd, &currentChar, 1); 
+                            if(currentChar == '\n') {                                     
+                                write(1,currentLine.characters, currentLine.length);           
+                                currentLine.length = 0;
+                                printChar('\n');
+                                printChar('\n');
+                            } 
+                            else currentLine.characters[currentLine.length++] = ' ';
+                        } 
                     } else { 
-                        currentLine.characters[currentLine.length++] = ' ';          //if current line is not full and last read character in loop was a regular white we simply append a white space to seperate the next incoming word 
-                                          
+                        currentLine.characters[currentLine.length++] = ' ';          //if current line is not full and last read character in loop was a regular white we simply append a white space to seperate the next incoming word                     
                     }
                 }
             }
@@ -149,12 +151,15 @@ int main(int argc, char* argv[]){
                         currentLine.length = 0; 
                         printChar('\n');  
                     }
-                    byte = read(fd, &currentChar, 1);    
-                    if(currentChar == '\n') {                                   
-                        write(1,currentLine.characters, currentLine.length);          
-                        currentLine.length = 0;
-                        printChar('\n');
-                        printChar('\n');
+                    else {
+                        byte = read(fd, &currentChar, 1);    
+                        if(currentChar == '\n') {                                   
+                            write(1,currentLine.characters, currentLine.length);          
+                            currentLine.length = 0;
+                            printChar('\n');
+                            printChar('\n');
+                        } 
+                        else currentLine.characters[currentLine.length++] = ' ';
                     }
                 } else {
                     currentLine.characters[currentLine.length++] = ' ';               // Else, just add a white space to seperate the incoming word, if any
