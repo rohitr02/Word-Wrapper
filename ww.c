@@ -89,7 +89,7 @@ int main(int argc, char* argv[]){
                     currentLine.length = 0;
                     printChar('\n');
                 }
-                write(1,newWord.string, newWord.size);
+                write(1,newWord.string, newWord.currentLength);
                 printChar('\n');
                 if(currentChar == '\n') {               // if the last char read in getNextWord() was a \n, then we check to see if the next char is also a \n, if so, it indicates a new paragraph
                   byte = read(fd, &currentChar, 1); 
@@ -129,7 +129,8 @@ int main(int argc, char* argv[]){
                             printChar('\n');
                         }
                     } else { 
-                        currentLine.characters[currentLine.length++] = ' ';          //if current line is not full and last read character in loop was a regular white we simply append a white space to seperate the next incoming word                                           
+                        currentLine.characters[currentLine.length++] = ' ';          //if current line is not full and last read character in loop was a regular white we simply append a white space to seperate the next incoming word 
+                                          
                     }
                 }
             }
