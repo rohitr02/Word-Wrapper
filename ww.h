@@ -261,3 +261,35 @@ int wrapWord(int wrapLen, int fd){
     if(isBigWord_Return) return EXIT_FAILURE;  // if big word is encountered, return FAILURE, per directions of asssignment
     return EXIT_SUCCESS;                        // else return successfully        
 }
+
+
+/* Directory Methods */
+// Checks if input string is a directory
+int isDir(char *pathname) {
+	struct stat data;
+	
+	if (stat(pathname, &data)) {    // checks for error
+		perror(pathname);  // print error message
+		return FALSE;
+	}
+	
+	if (S_ISDIR(data.st_mode)) {
+		return TRUE;
+	}
+	return FALSE;
+}
+
+// Checks if input string is a file
+int isRegFile(char *pathname) {
+	struct stat data;
+	
+	if (stat(pathname, &data)) {    // checks for error
+		// perror(pathname);  // print error message
+		return FALSE;
+	}
+	
+	if (S_ISREG(data.st_mode)) {
+		return TRUE;
+	}
+	return FALSE;
+}
