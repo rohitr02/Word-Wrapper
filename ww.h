@@ -1,4 +1,14 @@
 // Storing functions here so that the .c file is less cluttered
+#define FALSE 0
+#define TRUE 1
+
+// check if the wrapLen is legally inputted -- checks for "12abcd" and "1abcd2" cases
+int isLegalFirstInput(char* arr){
+    for (char* ptr = arr; *ptr; ++ptr)
+        if(!(*ptr <= 57 && *ptr >= 48)) // character is not btwn '0' and '9'
+            return FALSE;
+    return TRUE;
+}
 
 // Write the word to stdout -- Might need to change this function later to use file descriptor instead
 void printWord(char* string, int wordIndex){
@@ -33,8 +43,6 @@ void debugPrintWord(char* string, int wordIndex){
     }
     printf("\n");
 }
-
-
 
 
 /* Decription:
@@ -110,3 +118,146 @@ int getNextWord(int fd, char *currentChar, int *byte, int *isBigWord, struct wor
     return EXIT_SUCCESS;
 }
 
+int wrapWord(int wrapLen, int fd){
+                                                // changed buffer to a single char, easier to read  
+    struct line currentLine;                // this struct keeps track of the status of the line
+    currentLine.width = wrapLen;                               // struct has a variable to keep track of the width
+    currentLine.length = 0;                                    // indicates how many elements in total are in the line
+    currentLine.characters = malloc(sizeof(struct line) * wrapLen);    // allocates space for the characters in the line
+    if(currentLine.characters == NULL) {                               // if NULL then we have no memory left, so return
+        return EXIT_FAILURE;
+    }
+
+    int isBigWord = FALSE;                              // used to detect if the current word is a big word (0-false, 1-true)
+    int isBigWord_Return = FALSE;                       // used to indicate if the program terminates with EXIT_FAILURE. If a big word is detetected, then this variable becomes true and it's used when terminating the program
+    int byte;                                           // used to read in bytes and to keep track of errors and  EOF
+    
+    char currentChar;                                   // used to store every character that's read from read()
+    int inBetweenText = FALSE;         
+
+    byte = read(fd, &currentChar, 1);                   // reading the very first character
+
+    while(byte > 0) {                                   // while byte is > 0, then we have not reached EOF or encountered an error, so keep reading
+
+        if(currentChar == '\n') {                       // [PARAGRAPH CASE] if we encounter a newline, then we check to see if the next char is also a newline. If it is, it indicates a new paragraph and we dump whatever we have in the current line and set up the new paragraph
+            byte = read(fd, &currentChar, 1); 
+            if((currentChar == '\n') && (inBetweenText)) {
+                if(currentLine.length > 0){
+                    write(1,currentLine.characters, currentLine.length-1);
+                    currentLine.length = 0;
+                    printChar('\n');
+                    printChar('\n');
+                }
+            }
+        }
+        else if(!isspace(currentChar)) {                           // if the read byte is not a white space, then we tokenize the upcoming word
+            struct word newWord;                                   // struct used to save the upcoming word
+            newWord.size = wrapLen;
+            newWord.currentLength = 0;                              // setting the length of the struct to zero to use as index for incoming chars
+            inBetweenText = TRUE;
+            if((getNextWord(fd, &currentChar, &byte, &isBigWord, &newWord)) == 1){     // GO TO WW.H FOR DESCRIPTION
+                free(currentLine.characters);
+                return EXIT_FAILURE;
+            }
+
+            if(isBigWord) isBigWord_Return = TRUE;                  // isBigWord may be TRUE in getNextWord(), if so we use it to indicate how to terminate the program
+
+           if(isBigWord == TRUE) {                         // case to handle words that are bigger than the indicated width
+                if(currentLine.length > 0) {               // if there is something in the line struct, write it to STDOUT to give the bid word its own line
+                    write(1,currentLine.characters, currentLine.length-1);
+                    currentLine.length = 0;
+                    printChar('\n');
+                }
+                write(1,newWord.string, newWord.currentLength);
+                printChar('\n');
+                if(currentChar == '\n') {               // if the last char read in getNextWord() was a \n, then we check to see if the next char is also a \n, if so, it indicates a new paragraph
+                    byte = read(fd, &currentChar, 1); 
+                    if(currentChar == '\n') printChar('\n');
+                }
+                free(newWord.string);
+                isBigWord = FALSE;
+            }
+            else if(newWord.currentLength + currentLine.length <= currentLine.width) {  // case for when adding the word struct to the current line is less than wrapLen
+                for(int i = 0; i < newWord.currentLength; i++) {                           //append the word in word struct to the current line we're working with
+                    currentLine.characters[currentLine.length++] = newWord.string[i];
+                }
+
+                free(newWord.string);
+                if(currentLine.length == currentLine.width)  {                    // if current line is now full, write it to STDOUT and reset it
+                    write(1,currentLine.characters, currentLine.length);
+                    currentLine.length = 0;
+                    printChar('\n');
+                    if(currentChar == '\n') {                               // if the last char read in getNextWord() was a \n, then we check to see if the next char is also a \n, if so, it indicates a new paragraph
+                        byte = read(fd, &currentChar, 1); 
+                        if(currentChar == '\n') printChar('\n');
+                    }
+                }
+                else {                                                  // cases for when  current line is not full
+                    if(currentChar == '\n') {                           // if the last char read in getNextWord() was a \n, then we check to see if the next char is also a \n, if so, it indicates a new paragraph
+                        if(fd == 0) {
+                            write(1,currentLine.characters, currentLine.length);           
+                            currentLine.length = 0;
+                            printChar('\n'); 
+                            byte = read(fd, &currentChar, 1);  
+                        } 
+                        else {
+                            byte = read(fd, &currentChar, 1); 
+                            if(currentChar == '\n') {                                     
+                                write(1,currentLine.characters, currentLine.length);           
+                                currentLine.length = 0;
+                                printChar('\n');
+                                printChar('\n');
+                            } 
+                            else currentLine.characters[currentLine.length++] = ' ';
+                        } 
+                    } else { 
+                        currentLine.characters[currentLine.length++] = ' ';          //if current line is not full and last read character in loop was a regular white we simply append a white space to seperate the next incoming word                     
+                    }
+                }
+            }
+            else if(newWord.currentLength + currentLine.length > currentLine.width) {  // Case for when adding the new word to the current line exceeds to wrapLen
+                write(1,currentLine.characters, currentLine.length-1);                      // write out what's already in the line and reset currentLine
+                currentLine.length = 0;
+                printChar('\n');
+
+                for(int i = 0; i < newWord.currentLength; i++) {                           // Copy over the word in word struct to the newly reset currentLine
+                    currentLine.characters[currentLine.length++] = newWord.string[i];
+                }
+                free(newWord.string);
+                if(currentChar == '\n') {                                               // if the last char read in getNextWord() was a \n, then we check to see if the next char is also a \n, if so, it indicates a new paragraph
+                    if(fd == 0) {
+                        write(1,currentLine.characters, currentLine.length);           
+                        currentLine.length = 0; 
+                        printChar('\n');  
+                    }
+                    else {
+                        byte = read(fd, &currentChar, 1);    
+                        if(currentChar == '\n') {                                   
+                            write(1,currentLine.characters, currentLine.length);          
+                            currentLine.length = 0;
+                            printChar('\n');
+                            printChar('\n');
+                        } 
+                        else currentLine.characters[currentLine.length++] = ' ';
+                    }
+                } else {
+                    currentLine.characters[currentLine.length++] = ' ';               // Else, just add a white space to seperate the incoming word, if any
+                }
+            }
+        } 
+        else {
+            byte = read(fd, &currentChar, 1); 
+        }
+    } 
+
+    if(currentLine.length > 0) {                               // this is for when we reach end of file. If there's anything in the current Line, write it out
+        write(1,currentLine.characters, currentLine.length);
+        currentLine.length = 0;
+        printChar('\n');
+    }
+
+    close(fd);                                             // close the file
+    free(currentLine.characters);                        // free current Line pointer;
+    if(isBigWord_Return) return EXIT_FAILURE;  // if big word is encountered, return FAILURE, per directions of asssignment
+    return EXIT_SUCCESS;                        // else return successfully        
+}
