@@ -294,7 +294,7 @@ int isRegFile(char *pathname) {
 	return FALSE;
 }
 
-int buildFileName(char *directory, char *file, char *filename) {
+int buildPath(char *directory, char *file, char *filename, int toWRAP) {
     int directoryLength = strlen(directory);
     int fileLength = strlen(file);
     int i;
@@ -305,24 +305,14 @@ int buildFileName(char *directory, char *file, char *filename) {
 
     filename[i++] = '/';
 
+    if(toWRAP) {
+        char* wrap = "wrap.";
+        for(int q = 0; q < 5; q++) filename[i++] = wrap[q];
+    }
+
     for(int q = 0; q < fileLength; q++) {
         filename[i++] = file[q];
     }
 
     return EXIT_SUCCESS;
-}
-
-int createWrappedFile_Name(char *filename, char *newFileName) {
-    int i;
-    char* wrap = "wrap.";
-
-   for(i = 0; i < strlen(wrap); i++) {
-       newFileName[i] = wrap[i];
-   }
-
-   for(int k = 0; k < strlen(filename); k++) {
-       newFileName[i++] = filename[k];
-   }
-
-   return EXIT_SUCCESS;
 }

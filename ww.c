@@ -45,35 +45,49 @@ int main(int argc, char* argv[]){
     else if(isDir(argv[2]) == TRUE){                // This must be a directory or an illegal input -- if it is illegal, then it will get handled by the perror statement in isDir().
         DIR *folder = opendir(argv[2]);            // open the current directory
         struct dirent *currentFile;
-        char *directory = argv[2];
-        int return_Value = 0;
-        while ((currentFile = readdir(folder)) != NULL) {   // just prints all reg files in the directory
-            if (strcmp(currentFile->d_name, ".") != 0 && strcmp(currentFile->d_name, "..") != 0 && strncmp(currentFile->d_name, "wrap.", 5) != 0) {
-                int directoryLength = strlen(directory);
-                int fileLength = strlen(currentFile->d_name);
-                char *filename = malloc(sizeof(char) * (directoryLength + fileLength + 1));
-                if(filename == NULL) return EXIT_FAILURE;
-                buildFileName(directory, currentFile->d_name, filename);
-                if(isRegFile(filename)) {
-                    char *newWrappedFile = malloc(sizeof(char) * (5 + fileLength));        // 5 is to account for "wrap."
+        char *directory = argv[2];                  // used to store the name of the dir for readibility 
+        int return_Value = 0;                       // this is turned to 1 and returned at the end. Checks if any of the files encounter an error
+        currentFile = readdir(folder);
+        while (currentFile != NULL) {               // loops through each file
+            if (strcmp(currentFile->d_name, ".") != 0 && strcmp(currentFile->d_name, "..") != 0 && strncmp(currentFile->d_name, "wrap.", 5) != 0) {         // only interacts with file that do not start with "wrap." or are ".", ".."
+
+                int directoryLength = strlen(directory);                    // used to store the length of the dir name
+                int fileLength = strlen(currentFile->d_name);               // used to store the length of the dir name
+                char *filePath = malloc(sizeof(char) * (directoryLength + fileLength + 1));     // an array that allocates space for "dir/filename" 
+                if(filePath == NULL) return EXIT_FAILURE;
+                buildPath(directory, currentFile->d_name, filePath, FALSE);                            // populate the array with the actual "dir/file" path
+
+                if(isRegFile(filePath)) {           // check to see if the name of the file in the array is a regular file
+                    char *newWrappedFile = malloc(sizeof(char) * (directoryLength + 6 + fileLength));        // allocates space for an array in the format of "dir/wrap.filename"
                     if(newWrappedFile == NULL) return EXIT_FAILURE;
-                    createWrappedFile_Name(currentFile->d_name, newWrappedFile);
-                    printf("%s\n", newWrappedFile);
-                    fd = open(filename, O_RDONLY, 0);
-                    int newFileDescriptor;
+                    buildPath(directory, currentFile->d_name, newWrappedFile, TRUE);                 // populates the arrauy with the actual "dir/wrap.filename"
+
+                    fd = open(filePath, O_RDONLY, 0);                   // opens current file in dir to read from
+                    if(fd == -1) {
+                        return_Value = 1;
+                        currentFile = readdir(folder);
+                        continue;
+                    }
+                    int newFileDescriptor;                              // variable to store the fd of the new WRAPPED file
+
                     umask(DEF_UMASK);
-                    newFileDescriptor = open(newWrappedFile, O_CREAT|O_TRUNC|O_WRONLY, DEF_MODE);
-                    if(wrapWord(wrapLen, fd, newFileDescriptor) == 1) return_Value = 1; 
-                    close(fd);
-                    close(newFileDescriptor);
-                    free(newWrappedFile);
+                    newFileDescriptor = open(newWrappedFile, O_CREAT|O_TRUNC|O_WRONLY, DEF_MODE);       // creates "dir/wrap.filename" 
+                    if(wrapWord(wrapLen, fd, newFileDescriptor) == 1) return_Value = 1;                 // current file, "dir/file," is read, wrapped, and written to "dir/wrap.filename"
+
+                    close(fd);          // close orginal file
+                    close(newFileDescriptor);   // closes new file
+                    free(newWrappedFile);       // frees array that stored "dir/wrap.filename"
 
                 }
-                free(filename);
+                free(filePath);     // frees "dir/filename"
+                currentFile = readdir(folder); // get next file
+            }
+            else {
+                currentFile = readdir(folder); // get next file
             }
         }
-        closedir(folder);
-        return return_Value;
+        closedir(folder); // close directory
+        return return_Value;    // this variable is originally set to 0, but if an error is encounter along the way, it's set to 1 and keeps reading
     } 
     else {
         return EXIT_FAILURE;
