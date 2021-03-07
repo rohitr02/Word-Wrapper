@@ -48,7 +48,7 @@ int main(int argc, char* argv[]){
         char *directory = argv[2];
         int return_Value = 0;
         while ((currentFile = readdir(folder)) != NULL) {   // just prints all reg files in the directory
-            if (strcmp(currentFile->d_name, ".") != 0 && strcmp(currentFile->d_name, "..") != 0 && strncmp(currentFile->d_name, "wrap.", 5) != 0){
+            if (strcmp(currentFile->d_name, ".") != 0 && strcmp(currentFile->d_name, "..") != 0 && strncmp(currentFile->d_name, "wrap.", 5) != 0) {
                 int directoryLength = strlen(directory);
                 int fileLength = strlen(currentFile->d_name);
                 char *filename = malloc(sizeof(char) * (directoryLength + fileLength + 1));
@@ -62,11 +62,12 @@ int main(int argc, char* argv[]){
                     fd = open(filename, O_RDONLY, 0);
                     int newFileDescriptor;
                     umask(DEF_UMASK);
-                    newFileDescriptor = open(newWrappedFile, O_CREAT|O_TRUNC|O_WRONLY, S_IRUSR | S_IWUSR);
+                    newFileDescriptor = open(newWrappedFile, O_CREAT|O_TRUNC|O_WRONLY, DEF_MODE);
                     if(wrapWord(wrapLen, fd, newFileDescriptor) == 1) return_Value = 1; 
                     close(fd);
                     close(newFileDescriptor);
                     free(newWrappedFile);
+
                 }
                 free(filename);
             }
