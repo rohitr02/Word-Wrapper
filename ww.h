@@ -16,9 +16,9 @@ void printWord(char* string, int wordIndex){
 }
 
 // Write a char to stdout -- Mainly using this to write newlines and spaces
-void printChar(char value){
+void printChar(char value, int fd){
     char string[1] = {value};
-    write(1, string, 1);
+    write(fd, string, 1);
 }
 
 // Clears the string word by setting all elements to 0 -- This may get inefficient if the wrap length is extremely large
@@ -118,7 +118,7 @@ int getNextWord(int fd, char *currentChar, int *byte, int *isBigWord, struct wor
     return EXIT_SUCCESS;
 }
 
-int wrapWord(int wrapLen, int fd){
+int wrapWord(int wrapLen, int fd, int writeTo){
                                                 // changed buffer to a single char, easier to read  
     struct line currentLine;                // this struct keeps track of the status of the line
     currentLine.width = wrapLen;                               // struct has a variable to keep track of the width
@@ -143,10 +143,10 @@ int wrapWord(int wrapLen, int fd){
             byte = read(fd, &currentChar, 1); 
             if((currentChar == '\n') && (inBetweenText)) {
                 if(currentLine.length > 0){
-                    write(1,currentLine.characters, currentLine.length-1);
+                    write(writeTo,currentLine.characters, currentLine.length-1);
                     currentLine.length = 0;
-                    printChar('\n');
-                    printChar('\n');
+                    printChar('\n', fd);
+                    printChar('\n', fd);
                 }
             }
         }
@@ -164,15 +164,15 @@ int wrapWord(int wrapLen, int fd){
 
            if(isBigWord == TRUE) {                         // case to handle words that are bigger than the indicated width
                 if(currentLine.length > 0) {               // if there is something in the line struct, write it to STDOUT to give the bid word its own line
-                    write(1,currentLine.characters, currentLine.length-1);
+                    write(writeTo,currentLine.characters, currentLine.length-1);
                     currentLine.length = 0;
-                    printChar('\n');
+                    printChar('\n',fd);
                 }
-                write(1,newWord.string, newWord.currentLength);
-                printChar('\n');
+                write(writeTo,newWord.string, newWord.currentLength);
+                printChar('\n',fd);
                 if(currentChar == '\n') {               // if the last char read in getNextWord() was a \n, then we check to see if the next char is also a \n, if so, it indicates a new paragraph
                     byte = read(fd, &currentChar, 1); 
-                    if(currentChar == '\n') printChar('\n');
+                    if(currentChar == '\n') printChar('\n',fd);
                 }
                 free(newWord.string);
                 isBigWord = FALSE;
@@ -184,29 +184,29 @@ int wrapWord(int wrapLen, int fd){
 
                 free(newWord.string);
                 if(currentLine.length == currentLine.width)  {                    // if current line is now full, write it to STDOUT and reset it
-                    write(1,currentLine.characters, currentLine.length);
+                    write(writeTo,currentLine.characters, currentLine.length);
                     currentLine.length = 0;
-                    printChar('\n');
+                    printChar('\n',fd);
                     if(currentChar == '\n') {                               // if the last char read in getNextWord() was a \n, then we check to see if the next char is also a \n, if so, it indicates a new paragraph
                         byte = read(fd, &currentChar, 1); 
-                        if(currentChar == '\n') printChar('\n');
+                        if(currentChar == '\n') printChar('\n',fd);
                     }
                 }
                 else {                                                  // cases for when  current line is not full
                     if(currentChar == '\n') {                           // if the last char read in getNextWord() was a \n, then we check to see if the next char is also a \n, if so, it indicates a new paragraph
                         if(fd == 0) {
-                            write(1,currentLine.characters, currentLine.length);           
+                            write(writeTo,currentLine.characters, currentLine.length);           
                             currentLine.length = 0;
-                            printChar('\n'); 
+                            printChar('\n',fd); 
                             byte = read(fd, &currentChar, 1);  
                         } 
                         else {
                             byte = read(fd, &currentChar, 1); 
                             if(currentChar == '\n') {                                     
-                                write(1,currentLine.characters, currentLine.length);           
+                                write(writeTo,currentLine.characters, currentLine.length);           
                                 currentLine.length = 0;
-                                printChar('\n');
-                                printChar('\n');
+                                printChar('\n',fd);
+                                printChar('\n',fd);
                             } 
                             else currentLine.characters[currentLine.length++] = ' ';
                         } 
@@ -216,9 +216,9 @@ int wrapWord(int wrapLen, int fd){
                 }
             }
             else if(newWord.currentLength + currentLine.length > currentLine.width) {  // Case for when adding the new word to the current line exceeds to wrapLen
-                write(1,currentLine.characters, currentLine.length-1);                      // write out what's already in the line and reset currentLine
+                write(writeTo,currentLine.characters, currentLine.length-1);                      // write out what's already in the line and reset currentLine
                 currentLine.length = 0;
-                printChar('\n');
+                printChar('\n',fd);
 
                 for(int i = 0; i < newWord.currentLength; i++) {                           // Copy over the word in word struct to the newly reset currentLine
                     currentLine.characters[currentLine.length++] = newWord.string[i];
@@ -226,17 +226,17 @@ int wrapWord(int wrapLen, int fd){
                 free(newWord.string);
                 if(currentChar == '\n') {                                               // if the last char read in getNextWord() was a \n, then we check to see if the next char is also a \n, if so, it indicates a new paragraph
                     if(fd == 0) {
-                        write(1,currentLine.characters, currentLine.length);           
+                        write(writeTo,currentLine.characters, currentLine.length);           
                         currentLine.length = 0; 
-                        printChar('\n');  
+                        printChar('\n',fd);  
                     }
                     else {
                         byte = read(fd, &currentChar, 1);    
                         if(currentChar == '\n') {                                   
-                            write(1,currentLine.characters, currentLine.length);          
+                            write(writeTo,currentLine.characters, currentLine.length);          
                             currentLine.length = 0;
-                            printChar('\n');
-                            printChar('\n');
+                            printChar('\n',fd);
+                            printChar('\n',fd);
                         } 
                         else currentLine.characters[currentLine.length++] = ' ';
                     }
@@ -251,9 +251,9 @@ int wrapWord(int wrapLen, int fd){
     } 
 
     if(currentLine.length > 0) {                               // this is for when we reach end of file. If there's anything in the current Line, write it out
-        write(1,currentLine.characters, currentLine.length);
+        write(writeTo,currentLine.characters, currentLine.length);
         currentLine.length = 0;
-        printChar('\n');
+        printChar('\n',fd);
     }
 
     close(fd);                                             // close the file
@@ -284,7 +284,7 @@ int isRegFile(char *pathname) {
 	struct stat data;
 	
 	if (stat(pathname, &data)) {    // checks for error
-		// perror(pathname);  // print error message
+		//perror(pathname);  // print error message
 		return FALSE;
 	}
 	
@@ -292,4 +292,37 @@ int isRegFile(char *pathname) {
 		return TRUE;
 	}
 	return FALSE;
+}
+
+int buildFileName(char *directory, char *file, char *filename) {
+    int directoryLength = strlen(directory);
+    int fileLength = strlen(file);
+    int i;
+
+    for(i = 0; i < directoryLength; i++) {
+        filename[i] = directory[i];
+    }
+
+    filename[i++] = '/';
+
+    for(int q = 0; q < fileLength; q++) {
+        filename[i++] = file[q];
+    }
+
+    return EXIT_SUCCESS;
+}
+
+int createWrappedFile_Name(char *filename, char *newFileName) {
+    int i;
+    char* wrap = "wrap.";
+
+   for(i = 0; i < strlen(wrap); i++) {
+       newFileName[i] = wrap[i];
+   }
+
+   for(int k = 0; k < strlen(filename); k++) {
+       newFileName[i++] = filename[k];
+   }
+
+   return EXIT_SUCCESS;
 }
