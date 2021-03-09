@@ -138,7 +138,7 @@ int wrapWord(int wrapLen, int fd, int writeTo){
 
         if(currentChar == '\n' && byte > 0) {                       // [PARAGRAPH CASE] if we encounter a newline, then we check to see if the next char is also a newline. If it is, it indicates a new paragraph and we dump whatever we have in the current line and set up the new paragraph
             byte = read(fd, &currentChar, 1); 
-            if((currentChar == '\n') && (inBetweenText)) {
+            if((currentChar == '\n' && byte > 0) && (inBetweenText)) {
                 if(currentLine.length > 0){
                     write(writeTo,currentLine.characters, currentLine.length-1);
                     currentLine.length = 0;
