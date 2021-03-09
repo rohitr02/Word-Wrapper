@@ -251,7 +251,7 @@ int wrapWord(int wrapLen, int fd, int writeTo){
     } 
 
     if(currentLine.length > 0) {                               // this is for when we reach end of file. If there's anything in the current Line, write it out
-        write(writeTo,currentLine.characters, currentLine.length);
+        write(writeTo,currentLine.characters, currentLine.length-1);
         currentLine.length = 0;
         printChar('\n',writeTo);
     }
