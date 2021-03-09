@@ -40,7 +40,9 @@ int main(int argc, char* argv[]){
             perror(argv[2]);
             return EXIT_FAILURE;
         }
-        return wrapWord(wrapLen, fd, 1);
+        int return_Value = wrapWord(wrapLen, fd, 1);
+        close(fd);
+        return return_Value;
     }                                              /* Case 3: A Directory is Inputted */
     else if(isDir(argv[2]) == TRUE){                // This must be a directory or an illegal input -- if it is illegal, then it will get handled by the perror statement in isDir().
         DIR *folder = opendir(argv[2]);            // open the current directory
@@ -86,7 +88,7 @@ int main(int argc, char* argv[]){
                         free(filePath);
                         continue;
                     }
-                    
+
                     write(0, filePath, directoryLength + fileLength + 1);
                     printChar('\n', 0);
                     int newFileDescriptor;                              // variable to store the fd of the new WRAPPED file

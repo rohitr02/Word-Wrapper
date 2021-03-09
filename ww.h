@@ -86,7 +86,6 @@ struct word {
 int getNextWord(int fd, char *currentChar, int *byte, int *isBigWord, struct word* newWord) {
     newWord->string = malloc(sizeof(char) * newWord->size);
     if(newWord->string == NULL) {
-        close(fd); 
         return EXIT_FAILURE;
     }
 
@@ -96,7 +95,6 @@ int getNextWord(int fd, char *currentChar, int *byte, int *isBigWord, struct wor
             temp = realloc(newWord->string, newWord->size*2);
             if(newWord->string == NULL) {
                 free(newWord->string);
-                close(fd); 
                 return EXIT_FAILURE;
             }
             newWord->string = temp;
@@ -110,7 +108,6 @@ int getNextWord(int fd, char *currentChar, int *byte, int *isBigWord, struct wor
              
         if(*byte == -1) {                                       
             free(newWord->string);
-            close(fd); 
             return EXIT_FAILURE;
         }     
                                                                
@@ -172,7 +169,7 @@ int wrapWord(int wrapLen, int fd, int writeTo){
                 printChar('\n',writeTo);
                 if(currentChar == '\n') {               // if the last char read in getNextWord() was a \n, then we check to see if the next char is also a \n, if so, it indicates a new paragraph
                     byte = read(fd, &currentChar, 1); 
-                    if(currentChar == '\n') printChar('\n',writeTo);
+                    if(currentChar == '\n' && byte > 0) printChar('\n',writeTo);
                 }
                 free(newWord.string);
                 isBigWord = FALSE;
@@ -187,13 +184,13 @@ int wrapWord(int wrapLen, int fd, int writeTo){
                     write(writeTo,currentLine.characters, currentLine.length);
                     currentLine.length = 0;
                     printChar('\n',writeTo);
-                    if(currentChar == '\n') {                               // if the last char read in getNextWord() was a \n, then we check to see if the next char is also a \n, if so, it indicates a new paragraph
+                    if(currentChar == '\n' && byte > 0) {                               // if the last char read in getNextWord() was a \n, then we check to see if the next char is also a \n, if so, it indicates a new paragraph
                         byte = read(fd, &currentChar, 1); 
                         if(currentChar == '\n') printChar('\n',writeTo);
                     }
                 }
                 else {                                                  // cases for when  current line is not full
-                    if(currentChar == '\n') {                           // if the last char read in getNextWord() was a \n, then we check to see if the next char is also a \n, if so, it indicates a new paragraph
+                    if(currentChar == '\n' && byte > 0) {                           // if the last char read in getNextWord() was a \n, then we check to see if the next char is also a \n, if so, it indicates a new paragraph
                         if(fd == 0) {
                             write(writeTo,currentLine.characters, currentLine.length);           
                             currentLine.length = 0;
@@ -205,7 +202,7 @@ int wrapWord(int wrapLen, int fd, int writeTo){
                             if(currentChar == '\n') {                                     
                                 write(writeTo,currentLine.characters, currentLine.length);           
                                 currentLine.length = 0;
-                                printChar('\n',writeTo);
+                                //printChar('\n',writeTo);
                                 printChar('\n',writeTo);
                             } 
                             else currentLine.characters[currentLine.length++] = ' ';
@@ -224,7 +221,7 @@ int wrapWord(int wrapLen, int fd, int writeTo){
                     currentLine.characters[currentLine.length++] = newWord.string[i];
                 }
                 free(newWord.string);
-                if(currentChar == '\n') {                                               // if the last char read in getNextWord() was a \n, then we check to see if the next char is also a \n, if so, it indicates a new paragraph
+                if(currentChar == '\n' && byte > 0) {                                               // if the last char read in getNextWord() was a \n, then we check to see if the next char is also a \n, if so, it indicates a new paragraph
                     if(fd == 0) {
                         write(writeTo,currentLine.characters, currentLine.length);           
                         currentLine.length = 0; 
@@ -256,7 +253,6 @@ int wrapWord(int wrapLen, int fd, int writeTo){
         printChar('\n',writeTo);
     }
 
-    close(fd);                                             // close the file
     free(currentLine.characters);                        // free current Line pointer;
     if(isBigWord_Return) return EXIT_FAILURE;  // if big word is encountered, return FAILURE, per directions of asssignment
     return EXIT_SUCCESS;                        // else return successfully        
@@ -269,7 +265,6 @@ int isDir(char *pathname) {
 	struct stat data;
 	
 	if (stat(pathname, &data)) {    // checks for error
-		perror(pathname);  // print error message
 		return FALSE;
 	}
 	
@@ -284,7 +279,6 @@ int isRegFile(char *pathname) {
 	struct stat data;
 	
 	if (stat(pathname, &data)) {    // checks for error
-		//perror(pathname);  // print error message
 		return FALSE;
 	}
 	
