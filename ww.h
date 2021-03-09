@@ -191,23 +191,15 @@ int wrapWord(int wrapLen, int fd, int writeTo){
                 }
                 else {                                                  // cases for when  current line is not full
                     if(currentChar == '\n' && byte != 0) {                           // if the last char read in getNextWord() was a \n, then we check to see if the next char is also a \n, if so, it indicates a new paragraph
-                        if(fd == 0) {
+                        byte = read(fd, &currentChar, 1); 
+                        if(currentChar == '\n' && byte > 0) {                                     
                             write(writeTo,currentLine.characters, currentLine.length);           
                             currentLine.length = 0;
-                            printChar('\n',writeTo); 
-                            byte = read(fd, &currentChar, 1);  
+                            printChar('\n',writeTo);
+                            printChar('\n',writeTo);
                         } 
-                        else {
-                            byte = read(fd, &currentChar, 1); 
-                            if(currentChar == '\n' && byte > 0) {                                     
-                                write(writeTo,currentLine.characters, currentLine.length);           
-                                currentLine.length = 0;
-                                printChar('\n',writeTo);
-                                printChar('\n',writeTo);
-                                printChar(byte, writeTo);
-                            } 
-                            else currentLine.characters[currentLine.length++] = ' ';
-                        } 
+                        else currentLine.characters[currentLine.length++] = ' ';
+                         
                     } else { 
                         currentLine.characters[currentLine.length++] = ' ';          //if current line is not full and last read character in loop was a regular white we simply append a white space to seperate the next incoming word                     
                     }
@@ -223,21 +215,14 @@ int wrapWord(int wrapLen, int fd, int writeTo){
                 }
                 free(newWord.string);
                 if(currentChar == '\n' && byte > 0) {                                               // if the last char read in getNextWord() was a \n, then we check to see if the next char is also a \n, if so, it indicates a new paragraph
-                    if(fd == 0) {
-                        write(writeTo,currentLine.characters, currentLine.length);           
-                        currentLine.length = 0; 
-                        printChar('\n',writeTo);  
-                    }
-                    else {
-                        byte = read(fd, &currentChar, 1);    
-                        if(currentChar == '\n' && byte > 0) {                                   
-                            write(writeTo,currentLine.characters, currentLine.length);          
-                            currentLine.length = 0;
-                            printChar('\n',writeTo);
-                            printChar('\n',writeTo);
-                        } 
-                        else currentLine.characters[currentLine.length++] = ' ';
-                    }
+                    byte = read(fd, &currentChar, 1);    
+                    if(currentChar == '\n' && byte > 0) {                                   
+                        write(writeTo,currentLine.characters, currentLine.length);          
+                        currentLine.length = 0;
+                        printChar('\n',writeTo);
+                        printChar('\n',writeTo);
+                    } 
+                    else currentLine.characters[currentLine.length++] = ' ';
                 } else {
                     currentLine.characters[currentLine.length++] = ' ';               // Else, just add a white space to seperate the incoming word, if any
                 }
