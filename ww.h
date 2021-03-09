@@ -136,7 +136,7 @@ int wrapWord(int wrapLen, int fd, int writeTo){
 
     while(byte > 0) {                                   // while byte is > 0, then we have not reached EOF or encountered an error, so keep reading
 
-        if(currentChar == '\n') {                       // [PARAGRAPH CASE] if we encounter a newline, then we check to see if the next char is also a newline. If it is, it indicates a new paragraph and we dump whatever we have in the current line and set up the new paragraph
+        if(currentChar == '\n' && byte > 0) {                       // [PARAGRAPH CASE] if we encounter a newline, then we check to see if the next char is also a newline. If it is, it indicates a new paragraph and we dump whatever we have in the current line and set up the new paragraph
             byte = read(fd, &currentChar, 1); 
             if((currentChar == '\n') && (inBetweenText)) {
                 if(currentLine.length > 0){
@@ -186,11 +186,11 @@ int wrapWord(int wrapLen, int fd, int writeTo){
                     printChar('\n',writeTo);
                     if(currentChar == '\n' && byte > 0) {                               // if the last char read in getNextWord() was a \n, then we check to see if the next char is also a \n, if so, it indicates a new paragraph
                         byte = read(fd, &currentChar, 1); 
-                        if(currentChar == '\n') printChar('\n',writeTo);
+                        if(currentChar == '\n' && byte > 0) printChar('\n',writeTo);
                     }
                 }
                 else {                                                  // cases for when  current line is not full
-                    if(currentChar == '\n' && byte > 0) {                           // if the last char read in getNextWord() was a \n, then we check to see if the next char is also a \n, if so, it indicates a new paragraph
+                    if(currentChar == '\n' && byte != 0) {                           // if the last char read in getNextWord() was a \n, then we check to see if the next char is also a \n, if so, it indicates a new paragraph
                         if(fd == 0) {
                             write(writeTo,currentLine.characters, currentLine.length);           
                             currentLine.length = 0;
@@ -199,11 +199,12 @@ int wrapWord(int wrapLen, int fd, int writeTo){
                         } 
                         else {
                             byte = read(fd, &currentChar, 1); 
-                            if(currentChar == '\n') {                                     
+                            if(currentChar == '\n' && byte > 0) {                                     
                                 write(writeTo,currentLine.characters, currentLine.length);           
                                 currentLine.length = 0;
-                                //printChar('\n',writeTo);
                                 printChar('\n',writeTo);
+                                printChar('\n',writeTo);
+                                printChar(byte, writeTo);
                             } 
                             else currentLine.characters[currentLine.length++] = ' ';
                         } 
@@ -229,7 +230,7 @@ int wrapWord(int wrapLen, int fd, int writeTo){
                     }
                     else {
                         byte = read(fd, &currentChar, 1);    
-                        if(currentChar == '\n') {                                   
+                        if(currentChar == '\n' && byte > 0) {                                   
                             write(writeTo,currentLine.characters, currentLine.length);          
                             currentLine.length = 0;
                             printChar('\n',writeTo);
