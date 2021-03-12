@@ -1,25 +1,10 @@
 OUTPUT=ww
-CFLAGS=-g -Wall -Werror -fsanitize=address -std=c99
-DFLAGS=-g -Wall -Werror -fsanitize=address -std=c99 -DDEBUG
-# LFLAGS=-lm $(LFLAGS)
+CFLAGS=-g -Wall -Werror -fsanitize=undefined -fsanitize=address -std=c99
 
-# Temperarily set to always run the debug file
-# all: $(OUTPUT)
-all: dww
+all: $(OUTPUT)
 
-# Regular runner
-# ww: ww.c ww.h
-# 	gcc $(CFLAGS) -o $@ $<
-
-# ww: ww.c
-# 	gcc $(CFLAGS) -o $@ $<
-
-# Debugging runner
-dww: ww.c ww.h
-	gcc $(DFLAGS) -o $@ $<
-
-# dww: ww.c
-# 	gcc $(DFLAGS) -o $@ $<
+ww: ww.c ww.h
+	gcc $(CFLAGS) -o $@ $<
 
 clean:
 	rm -f *.o $(OUTPUT)

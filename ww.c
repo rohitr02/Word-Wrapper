@@ -58,7 +58,7 @@ int main(int argc, char* argv[]){
 
                 int directoryLength = strlen(directory);                    // used to store the length of the dir name
                 int fileLength = strlen(currentFile->d_name);               // used to store the length of the dir name
-                char *filePath = malloc(sizeof(char) * (directoryLength + fileLength + 1));     // an array that allocates space for "dir/filename" 
+                char *filePath = malloc(sizeof(char) * (directoryLength + fileLength + 2));     // an array that allocates space for "dir/filename" 
 
                 if(filePath == NULL) {
                     free(filePath);
@@ -69,7 +69,7 @@ int main(int argc, char* argv[]){
                 buildPath(directory, currentFile->d_name, filePath, FALSE);                            // populate the array with the actual "dir/file" path
 
                 if(isRegFile(filePath)) {           // check to see if the name of the file in the array is a regular file
-                    char *newWrappedFile = malloc(sizeof(char) * (directoryLength + 6 + fileLength));        // allocates space for an array in the format of "dir/wrap.filename"
+                    char *newWrappedFile = malloc(sizeof(char) * (directoryLength + 7 + fileLength));        // allocates space for an array in the format of "dir/wrap.filename"
 
                     if(newWrappedFile == NULL) {
                         free(newWrappedFile);

@@ -290,7 +290,7 @@ int buildPath(char *directory, char *file, char *filename, int toWRAP) {
         for(int q = 0; q < 5; q++) filename[i++] = wrap[q];
     }
 
-    for(int q = 0; q < fileLength; q++) {
+    for(int q = 0; q <= fileLength; q++) {
         filename[i++] = file[q];
     }
 
