@@ -8,7 +8,7 @@ Project Description:
     
 Usage:
     1.) Create the execuatable file using the following command: 
-    ```c
+    ```
     gcc ww.c -o ww
     ```
     2a.) Run the program using the following command for file inputs ("#" should be the desired word wrap length): 
