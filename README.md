@@ -1,4 +1,4 @@
-# Names: Pauli Peralta and Rohit Rao
+Names: Pauli Peralta and Rohit Rao
 
 # Project Description:
 This is a word wrapping program that is able to wrap text.
