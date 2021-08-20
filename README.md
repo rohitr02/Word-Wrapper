@@ -10,7 +10,7 @@ Given a file and the length to wrap it to, it will print the wrapped text to the
 Given a directory and the length to wrap, it will create a new file for each of the files within the directory and the new file will contain the wrapped version of the original file.
 
 # Usage:
-1.) Create the execuatable file using the following command: ```gcc ww.c -o ww ```
+1.) Navigate to the directory of the program in terminal and create the execuatable file by typing: ```make```
 
 2.) Run the program using the below commands depending on which form of input you want:
 * To use standard input: ```./ww #```
@@ -18,6 +18,8 @@ Given a directory and the length to wrap, it will create a new file for each of 
 * To use a directory as input: ```./ww # dir``` ("dir" should be the directory containing the files to wrap)
     
 # Note:
+The program may only run on the Rutgers iLabs machines.
+
 The output files begin with "wrap." so the program does not recognize any files starting with "wrap." or "."
 
 Errors are handled with EXIT_FAILURE or a perror statement depending on the error.
