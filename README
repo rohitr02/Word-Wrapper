@@ -1,11 +1,52 @@
 Names: Pauli Peralta and Rohit Rao
-NetID: pp589 and rpr79
 
-Description of Testing Strategy:
-    For part 1, we began by testing against too many command line inputs and too little command line inputs. Next, we tested illegal command line inputs such as “12abc”, “-12”, or “0”. We also tested illegal file names and illegal directory names. In addition, we tested the provided example in the write up and other variations of files with numerous “\t” and “\n” in them. We also stress tested part 1 using files of varying sizes up to 100mb. Additionally, we tested it with files containing words with length of INT_MAX to make sure it could handle large words. Furthermore, we tested against leading and trailing newlines, tabs, and spaces. For each of the above test cases, we tested them using both redirection (using only the wrap length as command line input) and inputting the filename as the 2nd command line input. For the smaller cases, we also tested it through manual user input.
+Project Description:
+    This is a word wrapping program that is able to wrap text.
+    Given only a length to wrap text, it will take input from standard input and then print the wrapped text to standard output.
+    Given a file and the length to wrap it to, it will print the wrapped text to the standard output.
+    Given a directory and the length to wrap, it will create a new file for each of the files within the directory and the new file will contain the wrapped version of the original file.
+    
+Usage:
+    1.) Create the execuatable file using the following command: 
+    ```c
+    gcc ww.c -o ww
+    ```
+    2a.) Run the program using the following command for file inputs ("#" should be the desired word wrap length): 
+    ```
+    ./ww #
+    ```
+    2b.) Run the program using the following command for file inputs ("name.txt" should be the filename to wrap): 
+    ```
+    ./ww # name.txt
+    ```
+    2c.) Run the program using the following command for directory inputs ("dir" should be the directory containing the files to wrap): 
+    ```
+    ./ww # dir
+    ```
+    
+Note: The output files begin with "wrap." so the program does not recognize any files starting with "wrap."
 
-    For part 2, we began by testing against a directory with only 1 file until we were sure that our code worked. Then we tested it against a directory that was empty, a directory only containing “wrap.” files, only containing subdirectories, containing both subdirectories and regular files, and a directory that already contained the regular version and “wrap.” version of files. Once it worked with those cases, we made a directory that was approximately 0.97 gigabytes in size with 1000 textfiles and stress tested the program. Next, we tested against edge cases in file names such as “ wrap.txt”, “.wrap.txt”, “wrap. .txt”, and a few other variations. Then, we tested if it correctly handled file and directory names that were too large when combined. We also tested it with absolute and relative paths, and paths that were outside the current directory and paths inside subdirectories. Lastly, we tested it against directories with files that did not have read/write permissions. 
+Testing Strategy:
+    We tested for the following error cases:
+        * Too many command line inputs and too little command line inputs
+        * Illegal wrap length inputs (ex: “12abc”, “-12”, or “0”)
+        * Illegal file names and illegal directory names (ex: file/directory names don't exist, are too long, or have illegal characters)
+        * Empty files and directories
+        * Directory only containing filenames beginning with "wrap."
+        * Directory only containing subdirectories
+        * Directory only containing files with read only permission or no read/write permissions
+        * File and directory names that were too large when combined when adding "wrap." to the new file
+        * Using both absolute and relative paths including paths outside and inside current directory
+        
+    We tested the following stress cases:
+        * Individual files up to the size of 100mb
+        * Files and terminal input containing words of length INT_MAX
+        * Large directory up to the size of 1gb
+        * Directory containing up to 1000 files
+        
+    We tested the following odd cases:
+        * Files with a lot of whitespace characters in various parts of the text
+        * Using redirection with pipe for the input
+        * File names such as “ wrap.txt”, “.wrap.txt”, “wrap. .txt”, and a few other variations.
 
-    After completing both part 1 and 2, we tested using Valgrind, Address Sanitizer, and UBSan to make sure that the program was behaving correctly.
-
-Note: Assignment states to print an error using perror when a file can't be accessed (open returns -1), so for consistency we also used perror when a directory was passed as an argument and any of its file could not be accessed, as the there were no clear instructions as how to handle this case aside from terminanting with EXIT_FAILURE.
+    Lastly, we tested the program with Valgrind, Address Sanitizer, and UBSan.
